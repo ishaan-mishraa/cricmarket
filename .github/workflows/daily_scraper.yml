@@ -1,0 +1,38 @@
+name: CricMarket Scraper
+
+# Define WHEN this script runs
+on:
+  schedule:
+    # Runs at 2:00 AM UTC (which is 7:30 AM IST) every single day
+    - cron: '0 2 * * *'
+  workflow_dispatch: # This adds a manual "Run" button in the GitHub UI
+
+jobs:
+  scrape-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Grab your code from the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Setup the Python environment
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      # 3. Install the required libraries
+      - name: Install Dependencies
+        run: |
+          cd pipeline
+          pip install -r requirements.txt
+          
+      # 4. Run the script securely using GitHub Secrets
+      - name: Execute Pipeline
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          cd pipeline
+          python pipeline.py
