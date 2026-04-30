@@ -1,0 +1,18 @@
+# Node & Python dependencies
+node_modules/
+venv/
+__pycache__/
+
+# Environment Variables (NEVER PUSH THESE)
+.env
+.env.local
+
+# Next.js & Build folders
+.next/
+dist/
+out/
+build/
+
+# OS generated files
+.DS_Store
+Thumbs.db
