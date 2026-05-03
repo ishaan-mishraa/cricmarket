@@ -6,6 +6,7 @@ import { ArrowLeft, Activity, Trophy, Shield, Plus, Check, Trash2 } from 'lucide
 import { getPlayerBySlug } from '@/lib/api';
 import { createClient } from '@/utils/supabase/server';
 import ValuationChart from '@/components/ValuationChart'; // <-- Imported Chart
+import AIScoutingReport from '@/components/AIScoutingReport';
 
 export default async function PlayerProfile({
   params,
@@ -234,6 +235,7 @@ export default async function PlayerProfile({
           ) : (
              <div className="rounded-2xl border border-zinc-800/50 bg-zinc-900/20 p-8 text-center text-zinc-500">No T20 statistics available.</div>
           )}
+          <AIScoutingReport playerName={player.name} stats={stats} />
         </div>
       </div>
     </div>
