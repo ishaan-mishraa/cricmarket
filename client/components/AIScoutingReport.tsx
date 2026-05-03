@@ -23,7 +23,7 @@ export default function AIScoutingReport({ playerName, stats }: AIScoutingReport
       const result = await generateScoutingReport(playerName, stats);
       setReport(result);
     } catch (err) {
-      setError("Gemini failed to analyze the player data. Please try again.");
+      setError("CMAI failed to analyze the player data. Please try again.");
     } finally {
       setIsScouting(false);
     }
@@ -38,7 +38,7 @@ export default function AIScoutingReport({ playerName, stats }: AIScoutingReport
         <div className="flex items-center justify-between mb-6">
           <h2 className="flex items-center gap-2 text-xl font-semibold text-zinc-100">
             <BrainCircuit className="h-6 w-6 text-violet-400" />
-            Gemini AI Scouting
+            CM AI Scouting
           </h2>
           
           {!report && !isScouting && (
