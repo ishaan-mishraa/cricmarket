@@ -33,6 +33,8 @@ export interface PlayerStats {
 
 export interface Valuation {
   price_usd: number;
+  year: number;                 // <-- ADDED
+  acquisition_type: string;
   teams?: {
     name: string;
     primary_color: string;

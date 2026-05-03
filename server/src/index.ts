@@ -102,6 +102,8 @@ app.get('/api/players/:slug', async (c) => {
       *,
       player_stats (*),
       valuations (
+        year,
+        acquisition_type,
         price_usd,
         teams (name, primary_color)
       )
