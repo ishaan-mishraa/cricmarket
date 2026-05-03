@@ -26,9 +26,14 @@ jobs:
       - name: Install Dependencies
         run: |
           cd pipeline
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
           
-      # 4. Run the script securely using GitHub Secrets
+      # 4. Install Playwright Browsers and OS Dependencies (THE FIX)
+      - name: Install Playwright
+        run: playwright install --with-deps chromium
+          
+      # 5. Run the script securely using GitHub Secrets
       - name: Execute Pipeline
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

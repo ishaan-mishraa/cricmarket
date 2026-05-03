@@ -1,6 +1,7 @@
 import os
 import time
 import re
+import random
 from datetime import datetime
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -181,7 +182,7 @@ def run_pipeline():
                     time.sleep(1.5) # Give the grid a moment to update
                     
                     team_name = team_nodes.nth(i).locator('span').first.inner_text().strip()
-                    print(f"\n  🛡️ FRANCHISE: {team_name}")
+                    print(f"\n   🛡️ FRANCHISE: {team_name}")
                     
                     team_db_res = supabase.table('teams').select('id').eq('name', team_name).execute()
                     if not team_db_res.data:
@@ -228,13 +229,23 @@ def run_pipeline():
                                 "image_url": p_data['image_url'],
                                 "current_estimated_value": 0 
                             }
+                            # THIS IS LINE 118: It requires the 'slug' column to be UNIQUE in Supabase
                             p_res = supabase.table('players').upsert(player_payload, on_conflict='slug').execute()
                             player_db_id = p_res.data[0]['id']
 
-                            val_check = supabase.table('valuations').select('id').eq('player_id', player_db_id).eq('team_id', team_id).eq('year', year).execute()
+                            # --- FIXED VALUATION LOGIC ---
+                            # Only check if a valuation exists for this year, ignore the team_id for the check
+                            val_check = supabase.table('valuations').select('id').eq('player_id', player_db_id).eq('year', year).execute()
+                            
                             if not val_check.data:
+                                # Safe default insert including acquisition_type
                                 supabase.table('valuations').insert({
-                                    "player_id": player_db_id, "team_id": team_id, "league": league_name, "year": year, "price_usd": 0 
+                                    "player_id": player_db_id, 
+                                    "team_id": team_id, 
+                                    "league": league_name, 
+                                    "year": year, 
+                                    "price_usd": 0,
+                                    "acquisition_type": "Draft"
                                 }).execute()
 
                             s = p_data['stats']
@@ -258,7 +269,7 @@ def run_pipeline():
                             print(f"❌ DB/LOAD ERROR: {e}")
                         finally:
                             player_page.close() 
-                            time.sleep(0.5) # Since you aren't rate limited, we can speed this back up!
+                            time.sleep(random.uniform(1.5, 3.5))
 
             except Exception as e:
                 print(f"❌ Navigation Error on {league_name}: {e}")
