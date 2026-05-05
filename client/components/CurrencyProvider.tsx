@@ -7,7 +7,8 @@ type Currency = 'INR' | 'USD' | 'GBP' | 'AUD';
 interface CurrencyContextType {
   currency: Currency;
   setCurrency: (c: Currency) => void;
-  formatPrice: (amountInInr: number) => string;
+  // We added a 'compact' boolean flag here
+  formatPrice: (amountInInr: number, compact?: boolean) => string; 
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
@@ -21,16 +22,16 @@ export function CurrencyProvider({
 }) {
   const [currency, setCurrency] = useState<Currency>('INR');
 
-  const formatPrice = (amountInInr: number) => {
-    // Multiply the true INR database price by the live exchange rate
+  const formatPrice = (amountInInr: number, compact = false) => {
     const rate = initialRates[currency] || 1;
     const converted = amountInInr * rate;
     
-    // Format perfectly based on the locale
     return new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', {
       style: 'currency',
       currency: currency,
-      maximumFractionDigits: currency === 'INR' ? 0 : 2, // Decimals for USD/GBP, no decimals for INR
+      // If compact is true, it shows 1.7M or 14Cr. If false, shows full numbers.
+      notation: compact ? 'compact' : 'standard', 
+      maximumFractionDigits: compact ? 1 : (currency === 'INR' ? 0 : 2),
     }).format(converted);
   };
 

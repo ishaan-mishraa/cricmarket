@@ -1,68 +1,71 @@
 'use client';
 
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useCurrency } from './CurrencyProvider';
 
-interface ChartProps {
-  data: {
-    year: number;
-    price: number;
-  }[];
-}
+export default function ValuationChart({ data }: { data: { year: number; price: number }[] }) {
+  // Pull in our dynamic formatter
+  const { formatPrice } = useCurrency();
 
-export default function ValuationChart({ data }: ChartProps) {
-  // Format currency for the tooltip
-  const formatMoney = (value: number) => {
-    if (value === 0) return 'Undrafted';
-    if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
-    return `$${(value / 1000).toFixed(0)}k`;
+  // Recharts custom tooltip to display the full formatted price on hover
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950/90 p-4 shadow-2xl backdrop-blur-sm">
+          <p className="mb-1 text-sm font-medium text-zinc-400">{label} Valuation</p>
+          <p className="text-2xl font-black text-emerald-400">
+            {/* payload[0].payload.price targets the raw INR data we passed to the chart */}
+            {formatPrice(payload[0].payload.price)}
+          </p>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
-    <div className="mt-8 h-62.5 w-full">
+    <div className="h-[300px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+        <AreaChart data={data} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
               <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
             </linearGradient>
           </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+          
           <XAxis 
             dataKey="year" 
-            axisLine={false} 
+            stroke="#52525b" 
+            fontSize={12} 
             tickLine={false} 
-            tick={{ fill: '#71717a', fontSize: 12 }} 
+            axisLine={false} 
             dy={10}
           />
+          
           <YAxis 
-            hide={true} 
-            domain={['dataMin - 50000', 'dataMax + 200000']} 
+            stroke="#52525b" 
+            fontSize={12} 
+            tickLine={false} 
+            axisLine={false}
+            // Use our new hook with the 'compact' flag set to true!
+            tickFormatter={(value) => formatPrice(value, true)} 
+            width={80}
           />
-          <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <div className="rounded-lg border border-zinc-800 bg-zinc-950/90 p-3 shadow-xl backdrop-blur-sm">
-                    <p className="text-xs text-zinc-400 font-medium mb-1">
-                      {payload[0].payload.year} Valuation
-                    </p>
-                    <p className="text-lg font-bold text-emerald-400">
-                      {formatMoney(payload[0].value as number)}
-                    </p>
-                  </div>
-                );
-              }
-              return null;
-            }}
+          
+          <Tooltip 
+            content={<CustomTooltip />} 
+            cursor={{ stroke: '#52525b', strokeWidth: 1, strokeDasharray: '5 5' }} 
           />
-          <Area
-            type="monotone"
-            dataKey="price"
-            stroke="#10b981"
-            strokeWidth={3}
-            fillOpacity={1}
-            fill="url(#colorPrice)"
-            activeDot={{ r: 6, fill: "#10b981", stroke: "#09090b", strokeWidth: 4 }}
+          
+          <Area 
+            type="monotone" 
+            dataKey="price" 
+            stroke="#34d399" 
+            strokeWidth={3} 
+            fillOpacity={1} 
+            fill="url(#colorPrice)" 
           />
         </AreaChart>
       </ResponsiveContainer>
