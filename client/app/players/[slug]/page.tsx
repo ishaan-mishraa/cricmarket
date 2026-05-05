@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { ArrowLeft, Activity, Trophy, Shield, Plus, Check, Trash2 } from 'lucide-react';
 import { getPlayerBySlug } from '@/lib/api';
 import { createClient } from '@/utils/supabase/server';
-import ValuationChart from '@/components/ValuationChart'; // <-- Imported Chart
+import ValuationChart from '@/components/ValuationChart';
 import AIScoutingReport from '@/components/AIScoutingReport';
 
 const getLogoPath = (teamName: string) => {
@@ -32,27 +32,30 @@ export default async function PlayerProfile({
 
   const stats = player.player_stats?.[0];
   
-  // Prepare all valuations and sort them chronologically (2024 -> 2025 -> 2026) for the chart
+  // Prepare all valuations and sort them chronologically
   const allValuations = player.valuations || [];
   const sortedValuations = [...allValuations].sort((a: any, b: any) => a.year - b.year);
   
-  // Map data specifically for Recharts
+  // Map data specifically for Recharts using the true INR column
   const chartData = sortedValuations.map((v: any) => ({
     year: v.year,
-    price: Number(v.price_usd) || 0
+    price: Number(v.actual_price_local) || 0
   }));
 
-  // Get the current/latest valuation for the main display and draft logic
+  // Get the current/latest valuation
   const currentValuation = allValuations.find((v: any) => v.year === 2026) || sortedValuations[sortedValuations.length - 1];
   const team = currentValuation?.teams;
-  const playerPrice = currentValuation?.price_usd || 300000; // Fallback to base price
+  
+  // Fallback to 50 Lakhs (5000000 INR) base price if undefined
+  const playerPrice = currentValuation?.actual_price_local || 5000000; 
 
   // 2. Fetch Manager Data (If logged in)
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   let isDrafted = false;
-  let remainingBudget = 15000000;
+  // Set Manager Budget to 125 Crores INR
+  let remainingBudget = 1250000000;
   let rosterSize = 0;
 
   if (user) {
@@ -63,6 +66,7 @@ export default async function PlayerProfile({
 
     if (squad) {
       rosterSize = squad.length;
+      // Storing INR values in the existing bigint column
       const spent = squad.reduce((sum, p) => sum + Number(p.draft_price_usd), 0);
       remainingBudget -= spent;
       isDrafted = squad.some((p) => p.player_id === player.id);
@@ -80,7 +84,7 @@ export default async function PlayerProfile({
     const { error } = await supabaseServer.from('user_squads').insert({
       user_id: user.id,
       player_id: player.id,
-      draft_price_usd: playerPrice,
+      draft_price_usd: playerPrice, // Inserting INR value
     });
 
     if (!error) {
@@ -106,8 +110,9 @@ export default async function PlayerProfile({
     }
   };
 
+  // Format natively to INR
   const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
   };
 
   // Determine button state
@@ -150,7 +155,7 @@ export default async function PlayerProfile({
             <div className="flex items-center gap-4 rounded-xl border border-zinc-800/50 bg-zinc-900/40 p-5" style={{ borderLeftColor: team.primary_color, borderLeftWidth: '4px' }}>
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 p-2">
               <Image 
-                src={getLogoPath(team.name)} /* Adjust 'player.teams.name' to match your exact DB variable */
+                src={getLogoPath(team.name)}
                 alt={`${team.name} Logo`}
                 width={40}
                 height={40}

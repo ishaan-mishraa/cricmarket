@@ -1,31 +1,34 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getTeams, getPlayers } from '@/lib/api';
-import { Activity, Users, Shield, TrendingUp, ArrowRight, Wallet } from 'lucide-react';
+import { Activity, Users, Shield, ArrowRight } from 'lucide-react';
+import DynamicMetricCard from '@/components/DynamicMetricCard'; // 1. Import the dynamic client component
 
 export default async function Dashboard() {
   // Fetch data in parallel for maximum speed
   const [teams, playersData] = await Promise.all([
     getTeams(),
-    getPlayers(6, 0), // Grab 6 players for a quick preview
+    getPlayers(6, 0),
   ]);
 
   const previewPlayers = playersData.players;
 
-  // Calculate Global League Financials
-  const totalLeagueBudget = teams.reduce((acc, team) => acc + team.total_budget_usd, 0);
-  const totalRemainingLiquid = teams.reduce((acc, team) => acc + team.remaining_budget_usd, 0);
-  const totalSpent = totalLeagueBudget - totalRemainingLiquid;
-  const marketLiquidityPercent = (totalRemainingLiquid / totalLeagueBudget) * 100;
+  // 1. The 2026 Mega Auction Constants
+  const TEAMS_COUNT = 10;
+  const PURSE_PER_TEAM_INR = 1250000000; // 125 Crores INR
+  const TOTAL_LEAGUE_BUDGET_INR = TEAMS_COUNT * PURSE_PER_TEAM_INR;
 
-  // Formatter
-  const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  // 2. Schema-Accurate Math based on Hono Payload
+  const totalSpentInr = teams.reduce((acc: number, team: any) => {
+    const teamValuations = team.valuations || [];
+    const seasonValuations = teamValuations.filter((v: any) => v.year === 2026);
+    const teamSpent = seasonValuations.reduce((sum: number, v: any) => sum + (Number(v.actual_price_local) || 0), 0);
+    
+    return acc + teamSpent;
+  }, 0);
+
+  const totalRemainingInr = TOTAL_LEAGUE_BUDGET_INR - totalSpentInr;
+  const marketLiquidityPercent = (totalRemainingInr / TOTAL_LEAGUE_BUDGET_INR) * 100;
 
   return (
     <div className="space-y-12 pb-12 pt-4">
@@ -60,24 +63,28 @@ export default async function Dashboard() {
           Macro Market Overview
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard 
+          
+          {/* 3. Swap in the DynamicMetricCards and pass the raw INR values */}
+          <DynamicMetricCard 
             title="Total League Purse" 
-            value={formatMoney(totalLeagueBudget)} 
-            icon={Wallet} 
+            valueInInr={TOTAL_LEAGUE_BUDGET_INR} 
+            iconName="wallet" 
             color="text-zinc-100" 
           />
-          <MetricCard 
+          <DynamicMetricCard 
             title="Capital Deployed" 
-            value={formatMoney(totalSpent)} 
-            icon={TrendingUp} 
+            valueInInr={totalSpentInr} 
+            iconName="trending" 
             color="text-rose-400" 
           />
-          <MetricCard 
+          <DynamicMetricCard 
             title="Available Liquidity" 
-            value={formatMoney(totalRemainingLiquid)} 
-            icon={Activity} 
+            valueInInr={totalRemainingInr} 
+            iconName="activity" 
             color="text-emerald-400" 
           />
+          
+          {/* Liquidity Progress Bar (Remains Server-Side since it's just a percentage) */}
           <div className="flex flex-col justify-center rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-6">
             <p className="text-sm font-medium text-zinc-500">Market Liquidity</p>
             <div className="mt-3 flex items-end gap-3">
@@ -85,8 +92,8 @@ export default async function Dashboard() {
             </div>
             <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-zinc-950">
               <div 
-                className="h-full rounded-full bg-zinc-400" 
-                style={{ width: `${marketLiquidityPercent}%` }} 
+                className="h-full rounded-full bg-emerald-500 transition-all duration-1000" 
+                style={{ width: `${Math.max(0, Math.min(marketLiquidityPercent, 100))}%` }} 
               />
             </div>
           </div>
@@ -123,7 +130,7 @@ export default async function Dashboard() {
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {previewPlayers.map((player) => (
+          {previewPlayers.map((player: any) => (
             <Link key={player.id} href={`/players/${player.slug}`}>
               <div className="group relative flex aspect-square w-full flex-col overflow-hidden rounded-xl border border-zinc-800/50 bg-zinc-950 transition-all hover:border-zinc-600">
                 {player.image_url && (
@@ -149,15 +156,4 @@ export default async function Dashboard() {
   );
 }
 
-// Reusable micro-component for the top stats
-function MetricCard({ title, value, icon: Icon, color }: any) {
-  return (
-    <div className="flex flex-col justify-center rounded-2xl border border-zinc-800/50 bg-zinc-900/40 p-6">
-      <div className="flex items-center gap-2 text-sm font-medium text-zinc-500">
-        <Icon className="h-4 w-4" />
-        {title}
-      </div>
-      <p className={`mt-3 text-3xl font-bold ${color}`}>{value}</p>
-    </div>
-  );
-}
+// Notice that the static MetricCard function is gone!

@@ -2,10 +2,11 @@ export interface Team {
   id: string;
   name: string;
   league: string;
-  primary_color: string;
-  total_budget_usd: number;
-  remaining_budget_usd: number;
-  created_at: string;
+  primary_color?: string;
+  total_budget?: number;       // Updated to match DB
+  remaining_budget?: number;   // Updated to match DB
+  created_at?: string;
+  valuations?: Valuation[];    // Added for the nested join from Hono
 }
 
 export interface PlayerStats {
@@ -32,27 +33,30 @@ export interface PlayerStats {
 }
 
 export interface Valuation {
-  price_usd: number;
-  year: number;                 // <-- ADDED
-  acquisition_type: string;
+  id?: string;
+  price_usd?: number;
+  actual_price_local?: number; // <-- ADDED: Our true INR source of truth
+  year: number;                
+  acquisition_type?: string;
   teams?: {
     name: string;
-    primary_color: string;
+    primary_color?: string;
   };
+  players?: Partial<Player>;   // <-- ADDED: Allows TeamCard to map the roster
 }
 
 export interface Player {
   id: string;
-  cricbuzz_id: string;
+  cricbuzz_id?: string;
   slug: string;
   name: string;
-  nationality: string;
-  dob: string;
-  role: string;
-  batting_style: string;
-  bowling_style: string;
-  image_url: string;
-  current_estimated_value: number;
+  nationality?: string;
+  dob?: string;
+  role?: string;
+  batting_style?: string;
+  bowling_style?: string;
+  image_url?: string;
+  current_est_value?: number;  // Corrected to match the DB column exactly
   player_stats?: PlayerStats[];
   valuations?: Valuation[];
 }

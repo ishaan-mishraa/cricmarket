@@ -5,6 +5,7 @@ import { LogOut, LogIn } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { Mynerve } from 'next/font/google';
 import MobileMenu from './MobileMenu';
+import CurrencySelector from './CurrencySelector';
 
 const logoFont = Mynerve({ subsets: ['latin'], weight: ['400'] });
 
@@ -51,6 +52,7 @@ export default async function Navbar() {
 
         {/* Right Side: Auth, VIP Access & Mobile Menu */}
         <div className="flex items-center gap-3 sm:gap-4">
+          <CurrencySelector />
           {user ? (
             <>
               {/* The Glowing Manager Mode Indicator */}
@@ -64,7 +66,6 @@ export default async function Navbar() {
                 </span>
                 Manager Mode
               </Link>
-              
               {/* Discrete Sign Out Button */}
               <form action={handleSignOut}>
                 <button 

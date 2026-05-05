@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
+import { useCurrency } from './CurrencyProvider';
 
 const getLogoPath = (teamName: string) => {
   if (!teamName) return '/logo.svg';
@@ -24,6 +25,10 @@ type Team = {
 };
 
 export default function TeamCard({ team }: { team: Team }) {
+
+
+  // 1. Setup the strict INR formatter
+  const { formatPrice } = useCurrency();
   const [isExpanded, setIsExpanded] = useState(false);
   const percentSpent = (team.spent / team.budget) * 100;
 
@@ -64,19 +69,21 @@ export default function TeamCard({ team }: { team: Team }) {
             <div>
               <p className="text-xs font-medium text-zinc-500">Remaining Purse</p>
               <p className="text-3xl font-black tracking-tight text-white">
-                ${team.remaining.toLocaleString()}
+                {/* 2. Format Remaining Budget */}
+                {formatPrice(team.remaining)}
               </p>
             </div>
             <p className="text-xs font-medium text-zinc-500">
-              Spent: ${team.spent.toLocaleString()}
+              {/* 3. Format Spent Budget */}
+              Spent: {formatPrice(team.spent)}
             </p>
           </div>
 
           {/* Progress Bar */}
           <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-zinc-800">
             <div 
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400" 
-              style={{ width: `${percentSpent}%` }}
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-1000" 
+              style={{ width: `${Math.min(percentSpent, 100)}%` }} // Safety clamp at 100%
             />
           </div>
         </div>
@@ -105,7 +112,8 @@ export default function TeamCard({ team }: { team: Team }) {
                     <p className="text-[10px] uppercase tracking-wider text-zinc-500">{player.role}</p>
                   </div>
                   <p className="text-sm font-bold text-emerald-400">
-                    ${player.price.toLocaleString()}
+                    {/* 4. Format Player Price */}
+                    {formatPrice(player.price)}
                   </p>
                 </Link>
               ))}
