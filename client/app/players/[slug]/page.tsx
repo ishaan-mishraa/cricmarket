@@ -8,6 +8,12 @@ import { createClient } from '@/utils/supabase/server';
 import ValuationChart from '@/components/ValuationChart'; // <-- Imported Chart
 import AIScoutingReport from '@/components/AIScoutingReport';
 
+const getLogoPath = (teamName: string) => {
+  if (!teamName) return '/logo.svg';
+  const formattedName = teamName.toLowerCase().replace(/ /g, '-');
+  return `/teams/${formattedName}.png`;
+};
+
 export default async function PlayerProfile({
   params,
 }: {
@@ -142,7 +148,15 @@ export default async function PlayerProfile({
 
           {team && (
             <div className="flex items-center gap-4 rounded-xl border border-zinc-800/50 bg-zinc-900/40 p-5" style={{ borderLeftColor: team.primary_color, borderLeftWidth: '4px' }}>
-              <Shield className="h-8 w-8 opacity-80" style={{ color: team.primary_color }} />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 border border-zinc-800 p-2">
+              <Image 
+                src={getLogoPath(team.name)} /* Adjust 'player.teams.name' to match your exact DB variable */
+                alt={`${team.name} Logo`}
+                width={40}
+                height={40}
+                className="object-contain w-auto h-auto"
+              />
+            </div>
               <div>
                 <p className="text-sm font-medium text-zinc-500">Current Franchise</p>
                 <p className="text-lg font-bold text-zinc-100">{team.name}</p>

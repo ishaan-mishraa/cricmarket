@@ -1,7 +1,12 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
-import { LogOut, LogIn, Activity } from 'lucide-react';
+import { LogOut, LogIn } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
+import { Mynerve } from 'next/font/google';
+import MobileMenu from './MobileMenu';
+
+const logoFont = Mynerve({ subsets: ['latin'], weight: ['400'] });
 
 export default async function Navbar() {
   // 1. Securely check the user session on the server
@@ -22,27 +27,36 @@ export default async function Navbar() {
         
         {/* Left Side: Logo & Main Navigation */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-zinc-50">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-100 text-zinc-950">
-              <span className="font-black">CM</span>
-            </div>
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-zinc-50 transition-opacity hover:opacity-80">
+            <Image 
+              src="/logo.svg" 
+              alt="CricMarket Logo" 
+              width={32} 
+              height={32} 
+              className="rounded-md"
+            />
+            <span className={`${logoFont.className} text-2xl tracking-tighter bg-gradient-to-br from-white via-zinc-200 to-zinc-500 bg-clip-text text-transparent`}>
             CricMarket
+            </span>
           </Link>
+          
+          {/* Desktop Links (Hidden on Mobile) */}
           <div className="hidden items-center gap-6 text-sm font-medium text-zinc-400 md:flex">
             <Link href="/" className="transition-colors hover:text-zinc-100">Dashboard</Link>
             <Link href="/players" className="transition-colors hover:text-zinc-100">Players</Link>
             <Link href="/teams" className="transition-colors hover:text-zinc-100">Franchises</Link>
           </div>
+          {/* Notice: MobileMenu was removed from here! */}
         </div>
 
-        {/* Right Side: Auth & VIP Access */}
-        <div className="flex items-center gap-4">
+        {/* Right Side: Auth, VIP Access & Mobile Menu */}
+        <div className="flex items-center gap-3 sm:gap-4">
           {user ? (
             <>
               {/* The Glowing Manager Mode Indicator */}
               <Link 
                 href="/draft" 
-                className="group relative inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-sm font-medium text-emerald-400 transition-all hover:border-emerald-500/60 hover:bg-emerald-500/20"
+                className="hidden sm:inline-flex group relative items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-sm font-medium text-emerald-400 transition-all hover:border-emerald-500/60 hover:bg-emerald-500/20"
               >
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
@@ -65,12 +79,16 @@ export default async function Navbar() {
           ) : (
             <Link 
               href="/login" 
-              className="flex items-center gap-2 rounded-lg bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-zinc-300"
+              className="flex items-center gap-2 rounded-lg bg-zinc-100 px-3 py-1.5 sm:px-4 sm:py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-zinc-300"
             >
               <LogIn className="h-4 w-4" />
-              Sign In
+              <span className="hidden sm:inline">Sign In</span>
             </Link>
           )}
+
+          {/* THE FIX: Mobile Menu is now safely in the right-side container */}
+          <MobileMenu />
+          
         </div>
 
       </div>
