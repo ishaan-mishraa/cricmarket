@@ -7,6 +7,7 @@ import { getPlayerBySlug } from '@/lib/api';
 import { createClient } from '@/utils/supabase/server';
 import ValuationChart from '@/components/ValuationChart';
 import AIScoutingReport from '@/components/AIScoutingReport';
+import DynamicPrice from '@/components/DynamicPrice'; // <-- Imported the Dynamic Price Component
 
 const getLogoPath = (teamName: string) => {
   if (!teamName) return '/logo.svg';
@@ -110,11 +111,6 @@ export default async function PlayerProfile({
     }
   };
 
-  // Format natively to INR
-  const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
-  };
-
   // Determine button state
   const canAfford = remainingBudget >= playerPrice;
   const isRosterFull = rosterSize >= 15;
@@ -185,7 +181,8 @@ export default async function PlayerProfile({
                 <div className="mt-6">
                   <p className="text-sm font-medium text-zinc-500">2026 Contract Value</p>
                   <p className="mt-1 text-4xl font-bold tracking-tight text-emerald-400">
-                    {formatMoney(playerPrice)}
+                    {/* Swapped static formatter for the Dynamic Price component */}
+                    <DynamicPrice amountInInr={playerPrice} />
                   </p>
                 </div>
               </div>
