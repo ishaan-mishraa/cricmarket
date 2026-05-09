@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/utils/supabase/server';
 import { Wallet, Shield, Users, Trash2 } from 'lucide-react';
+import DynamicPrice from '@/components/DynamicPrice';
+import AIGmAssistant from '@/components/AIGmAssistant';
 
 export default async function DraftRoom() {
   const supabase = await createClient();
@@ -21,19 +23,25 @@ export default async function DraftRoom() {
     .single();
 
   // Fetch their drafted squad with player details
+  // Fetch their drafted squad with player details AND their T20 stats
   const { data: squad } = await supabase
     .from('user_squads')
     .select(`
       player_id,
       draft_price_usd,
       players (
-        id, name, slug, role, image_url, nationality
+        id, name, slug, role, image_url, nationality,
+        player_stats (
+          matches, runs, batting_strike_rate, batting_avg, wickets, economy
+        )
       )
     `)
     .eq('user_id', user.id);
 
-  // Financial Mechanics
-  const SALARY_CAP = 15000000; // $15M
+  // 2. Fix the Financial Mechanics to use the 125 Crore INR base
+  const SALARY_CAP = 1250000000; // 125 Crores INR
+  
+  // Note: Your DB column is still named 'draft_price_usd', but we are storing true INR in it now!
   const spent = squad?.reduce((acc, curr) => acc + Number(curr.draft_price_usd), 0) || 0;
   const remaining = SALARY_CAP - spent;
   const rosterSize = squad?.length || 0;
@@ -56,12 +64,6 @@ export default async function DraftRoom() {
       // Refresh the page data to recalculate the budget
       revalidatePath('/draft');
     }
-  };
-
-  const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency', currency: 'USD', maximumFractionDigits: 0,
-    }).format(amount);
   };
 
   return (
@@ -93,20 +95,28 @@ export default async function DraftRoom() {
               <Wallet className="h-4 w-4 text-emerald-500" />
               Available Draft Purse
             </p>
-            <p className="text-sm text-zinc-500">Cap: {formatMoney(SALARY_CAP)}</p>
+            <p className="text-sm text-zinc-500">
+              Cap: <DynamicPrice amountInInr={SALARY_CAP} compact={true} />
+            </p>
           </div>
           
-          <h2 className={`text-4xl font-bold tracking-tight ${remaining > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {formatMoney(remaining)}
+          {/* 3. Swap the static remaining budget with DynamicPrice */}
+          <h2 className={`text-4xl font-bold tracking-tight ${remaining >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <DynamicPrice amountInInr={remaining} />
           </h2>
 
           <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-zinc-950">
             <div 
-              className="h-full rounded-full bg-emerald-500 transition-all duration-1000"
-              style={{ width: `${(remaining / SALARY_CAP) * 100}%` }}
+              className={`h-full rounded-full transition-all duration-1000 ${remaining >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}
+              style={{ width: `${Math.min(Math.max((remaining / SALARY_CAP) * 100, 0), 100)}%` }}
             />
           </div>
         </div>
+        <AIGmAssistant 
+        squad={squad || []} 
+        remainingBudget={remaining} 
+        rosterSize={rosterSize} 
+      />
       </div>
 
       {/* The Roster */}
@@ -142,7 +152,8 @@ export default async function DraftRoom() {
                     <h3 className="truncate font-semibold text-zinc-100">{p.name}</h3>
                     <p className="truncate text-xs text-zinc-400">{p.role}</p>
                     <p className="mt-1 font-mono text-sm font-medium text-emerald-400">
-                      {formatMoney(slot.draft_price_usd)}
+                      {/* 4. Swap the drafted player price with DynamicPrice */}
+                      <DynamicPrice amountInInr={Number(slot.draft_price_usd)} />
                     </p>
                   </div>
 
